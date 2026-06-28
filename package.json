@@ -1,0 +1,21 @@
+{
+  "name": "ven-sismo-monitor",
+  "version": "4.0.0",
+  "description": "Monitor sísmico en tiempo real del Caribe y Venezuela con mapeo de daños estructurales",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "usgs-earthquake-api": "^1.0.32"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "VEN-SISMO",
+  "license": "MIT"
+}

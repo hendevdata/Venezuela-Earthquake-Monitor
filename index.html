@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VEN-SISMO // Monitor Sísmico y de Daños en Tiempo Real</title>
+  <meta name="description" content="Portal de monitoreo sísmico para el Caribe con foco en Venezuela. Muestra sismos en tiempo real de la USGS, evaluaciones de impacto PAGER, reportes ciudadanos de daños y datos de OpenStreetMap.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── HEADER ────────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="brand-badge">VS</div>
+      <div class="brand-text">
+        <h1>VEN-SISMO</h1>
+        <span>Monitoreo en Tiempo Real — Caribe &amp; Venezuela</span>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <div class="status-pill" id="status-pill">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-label">CONECTANDO</span>
+      </div>
+      <div class="header-meta">
+        <span id="usgs-label" class="meta-tag">USGS: <span id="feed-status" style="color:var(--warn)">CARGANDO</span></span>
+        <span class="meta-tag" id="last-sync-label">—</span>
+        <span class="meta-tag mono" id="clock">--:--:-- UTC</span>
+      </div>
+      <button class="refresh-btn" id="btn-refresh" title="Sincronizar ahora">
+        <i class="fa-solid fa-rotate"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── METRICS ROW ────────────────────────────────────────────────────────── -->
+  <section class="metrics-row">
+
+    <div class="metric-card">
+      <div class="metric-icon"><i class="fa-solid fa-wave-square"></i></div>
+      <div class="metric-body">
+        <div class="metric-value" id="m-total">--</div>
+        <div class="metric-label">Réplicas Caribe (7d)</div>
+      </div>
+    </div>
+
+    <div class="metric-card highlight">
+      <div class="metric-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="metric-body">
+        <div class="metric-value danger" id="m-maxmag">--</div>
+        <div class="metric-label">Magnitud Máxima</div>
+        <div class="metric-sub" id="m-maxloc">—</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon"><i class="fa-solid fa-building-circle-exmark"></i></div>
+      <div class="metric-body">
+        <div class="metric-value danger" id="m-collapsed">0</div>
+        <div class="metric-label">Reportes de Daños</div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div class="metric-body">
+        <div class="metric-value green" id="m-latest-mag">--</div>
+        <div class="metric-label">Último Sismo</div>
+        <div class="metric-sub" id="m-latest-time">—</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── MAIN BODY ──────────────────────────────────────────────────────────── -->
+  <main class="main-grid">
+
+    <!-- LEFT: Aftershock Feed -->
+    <aside class="feed-panel">
+      <div class="panel-header">
+        <span class="panel-title"><i class="fa-solid fa-rss"></i> Historial de Sismos</span>
+        <span class="live-badge"><span class="blink-dot"></span> EN VIVO</span>
+      </div>
+
+      <!-- Magnitude filter -->
+      <div class="mag-filter">
+        <button class="mag-btn active" data-min="0">TODOS</button>
+        <button class="mag-btn" data-min="3">M3+</button>
+        <button class="mag-btn" data-min="4">M4+</button>
+        <button class="mag-btn" data-min="5">M5+</button>
+      </div>
+
+      <div class="feed-list" id="feed-list">
+        <div class="feed-loading">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          <span>Conectando con USGS...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: Map -->
+    <section class="map-section">
+      <div class="map-toolbar">
+        <div class="toolbar-group">
+          <button class="tool-btn active" id="btn-sat-esri" title="Satélite Esri">Satélite Esri</button>
+          <button class="tool-btn" id="btn-sat-google" title="Satélite Google de Alta Resolución">Google Satélite</button>
+          <button class="tool-btn" id="btn-streets">Calles</button>
+        </div>
+        <div class="toolbar-group">
+          <button class="tool-btn active" id="btn-toggle-seismic" title="Mostrar epicentros de USGS">Epicentros</button>
+          <button class="tool-btn active" id="btn-toggle-citizen" title="Mostrar daños reportados por ciudadanos">Reportes Ciudadanos</button>
+          <button class="tool-btn" id="btn-toggle-osm" title="Cargar estructuras dañadas reales de OpenStreetMap">Daños OSM</button>
+        </div>
+        <div class="toolbar-group">
+          <button class="tool-btn active" id="btn-scope-ven" title="Monitorear solo sismos en Venezuela">Solo Venezuela</button>
+          <button class="tool-btn" id="btn-scope-caribe" title="Monitorear sismos en todo el Caribe">Caribe General</button>
+        </div>
+        <div class="toolbar-group">
+          <button class="tool-btn" id="btn-ven">VEN</button>
+          <button class="tool-btn" id="btn-ccs">CCS</button>
+          <button class="tool-btn" id="btn-suc">SUC</button>
+          <button class="tool-btn" id="btn-mer">MER</button>
+        </div>
+      </div>
+      <div id="map"></div>
+      
+      <!-- Magnitude & Damage legend -->
+      <div class="map-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#ff453a"></span>M6+ (Mayor)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ff9f0a"></span>M5+ (Moderado)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#30d5c8"></span>M3.5+</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ff3333; border-radius: 0;"></span>OSM Colapsado</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#00d2ff; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border-radius:0;"></span>Reporte Ciudadano</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ff007f; height: 3px; width: 12px; border-radius:0;"></span>Vía Bloqueada</span>
+        <span class="legend-item"><span class="legend-dot" style="background:rgba(255,165,0,0.35); border: 1px dashed orange; border-radius:0;"></span>Malla DYFI</span>
+      </div>
+    </section>
+
+    <!-- RIGHT: Impact, Reporting, & Alerts Panel -->
+    <aside class="alert-panel">
+      
+      <!-- Section 1: USGS PAGER Impact Assessment -->
+      <div class="panel-header">
+        <span class="panel-title"><i class="fa-solid fa-chart-bar"></i> Evaluación de Impacto (PAGER)</span>
+      </div>
+      <div class="pager-panel" id="pager-container">
+        <div class="no-selection-msg">
+          Selecciona un sismo del panel izquierdo para ver las estimaciones oficiales de daños y fatalidades de la USGS.
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Section 1.5: Buscador Unificado de Localizados -->
+      <div class="panel-header" style="margin-top:0;">
+        <span class="panel-title"><i class="fa-solid fa-magnifying-glass-location"></i> Buscador de Albergues (Localizados)</span>
+      </div>
+      <p class="alert-description">
+        Consulta si una persona se encuentra en los albergues activos buscando por nombre o número de cédula.
+      </p>
+      <div class="alert-form" style="border-bottom:none; padding-bottom: 0.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.35rem;">
+          <input id="s-person-query" type="text" class="field-input" placeholder="Ej. Juan Carlos Pérez o 12345678">
+          <button id="btn-search-person" class="subscribe-btn" style="margin-top: 0; padding: 0 0.75rem; width: auto;"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+        </div>
+        <div id="search-person-results" style="margin-top: 0.5rem; font-family: var(--font-mono); font-size: 0.65rem; max-height: 120px; overflow-y: auto;">
+          <!-- Resultados aparecerán aquí -->
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Section 2: Report Real Building Damage -->
+      <div class="panel-header">
+        <span class="panel-title"><i class="fa-solid fa-circle-exclamation"></i> Reportar Daño Estructural</span>
+      </div>
+      <p class="alert-description">
+        ¿Has presenciado un daño? Haz clic en el mapa para marcar las coordenadas exactas y describe lo observado.
+      </p>
+      <form class="alert-form" id="citizen-damage-form" onsubmit="event.preventDefault();">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;">
+          <div>
+            <label class="field-label" for="c-lat">Latitud</label>
+            <input id="c-lat" type="text" class="field-input" placeholder="Ej. 10.493" required readonly>
+          </div>
+          <div>
+            <label class="field-label" for="c-lon">Longitud</label>
+            <input id="c-lon" type="text" class="field-input" placeholder="Ej. -66.852" required readonly>
+          </div>
+        </div>
+        <div style="font-size:0.58rem; color:var(--text-sec); font-family:var(--mono); margin-top:0.15rem; text-align:center;">
+          <i class="fa-solid fa-map-pin"></i> Haz clic en el mapa para fijar la ubicación
+        </div>
+
+        <label class="field-label" for="c-category">Tipo de Afectación</label>
+        <select id="c-category" class="field-select">
+          <option value="collapse" selected>Colapso Estructural (Total/Parcial)</option>
+          <option value="structural">Grieta Grave / Inclinación</option>
+          <option value="roadblock">Vía Obstruida por Escombros</option>
+          <option value="outage">Falla de Servicios (Luz/Agua)</option>
+        </select>
+
+        <label class="field-label" for="c-desc">Detalle del Daño</label>
+        <textarea id="c-desc" class="field-input" style="resize:vertical; min-height:45px;" placeholder="Ej. Agrietamiento grave en vigas de carga del Edificio Altamira" required></textarea>
+
+        <button type="submit" class="subscribe-btn" id="btn-submit-report" style="background: rgba(255, 69, 58, 0.08); border-color: rgba(255, 69, 58, 0.25); color: var(--danger);">
+          <i class="fa-solid fa-paper-plane"></i> Publicar Reporte de Daño
+        </button>
+      </form>
+
+      <div class="divider"></div>
+
+      <!-- Section 3: Fault info -->
+      <div class="panel-header" style="margin-top:0;">
+        <span class="panel-title"><i class="fa-solid fa-mountain-sun"></i> Fallas Geológicas Activas</span>
+      </div>
+      <div class="fault-list">
+        <div class="fault-item">
+          <span class="fault-name">Falla del Pilar (Sucre / Oriente)</span>
+          <span class="fault-risk high">ALTO RIESGO</span>
+        </div>
+        <div class="fault-item">
+          <span class="fault-name">Falla de Boconó (Andes / Occidente)</span>
+          <span class="fault-risk high">ALTO RIESGO</span>
+        </div>
+        <div class="fault-item">
+          <span class="fault-name">Falla de San Sebastián (Costa Central)</span>
+          <span class="fault-risk med">RIESGO MEDIO</span>
+        </div>
+        <div class="fault-item">
+          <span class="fault-name">Sistema Tacagua - El Ávila (Caracas)</span>
+          <span class="fault-risk med">RIESGO MEDIO</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Section 3.5: Noticias de Emergencia (SOS Venezuela) -->
+      <div class="panel-header" style="margin-top:0;">
+        <span class="panel-title"><i class="fa-solid fa-newspaper"></i> Noticias en Vivo (SOS Venezuela)</span>
+      </div>
+      <div id="news-container" style="max-height: 140px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.6rem; padding: 0.2rem 0;">
+        <div style="color: var(--text-dim); text-align: center; padding: 0.5rem 0;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando noticias en vivo...</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Section 4: System Log -->
+      <div class="panel-header" style="margin-top:0;">
+        <span class="panel-title"><i class="fa-solid fa-terminal"></i> Historial del Sistema</span>
+      </div>
+      <div class="sys-log" id="sys-log"></div>
+
+    </aside>
+
+  </main>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <span>VEN-SISMO — Monitoreo de Terremotos y Daños en Tiempo Real</span>
+    <span>Orígenes: <a href="https://earthquake.usgs.gov" target="_blank">USGS Catalog</a> &middot; Satélite: Esri World Imagery &middot; Catastro Dañado: <a href="https://overpass-turbo.eu/" target="_blank">Overpass API (OSM)</a></span>
+    <span>Auto-sincronización: 60s</span>
+  </footer>
+
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- App Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

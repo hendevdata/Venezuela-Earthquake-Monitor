@@ -1,0 +1,72 @@
+{
+  "subscriptions": [
+    {
+      "phone": "+584121234567",
+      "email": "test@example.com",
+      "region": "all",
+      "threshold": 4.5,
+      "channel": "all",
+      "webhook": "",
+      "updatedAt": "2026-06-28T15:02:55.818Z",
+      "id": "sub-1782658975818",
+      "createdAt": "2026-06-28T15:02:55.818Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "cit-1782658975734",
+      "zone": "carupano",
+      "zoneName": "Sucre - Carúpano",
+      "category": "collapse",
+      "desc": "Edificio en Calle Bermúdez presenta grietas severas tras la réplica de las 8am",
+      "time": 1782658975734,
+      "coords": [
+        10.668,
+        -63.259
+      ]
+    }
+  ],
+  "alertsSent": 0,
+  "localizados": [
+    {
+      "id": "1",
+      "name": "Juan Carlos Pérez",
+      "docId": "V-12345678",
+      "shelter": "Polideportivo José María Vargas (La Guaira)",
+      "status": "Localizado, Estable",
+      "contact": "Protección Civil Vargas"
+    },
+    {
+      "id": "2",
+      "name": "María Alejandra Rodríguez",
+      "docId": "V-87654321",
+      "shelter": "Escuela República de Panamá (La Guaira)",
+      "status": "Localizada, Estable",
+      "contact": "Cruz Roja Seccional La Guaira"
+    },
+    {
+      "id": "3",
+      "name": "José Gregorio Mendoza",
+      "docId": "V-15963248",
+      "shelter": "Liceo José María Vargas (Macuto)",
+      "status": "Localizado, Recibiendo atención médica leve",
+      "contact": "Cuerpo de Bomberos de La Guaira"
+    },
+    {
+      "id": "4",
+      "name": "Carmen Elena Gómez",
+      "docId": "V-65478912",
+      "shelter": "Polideportivo José María Vargas (La Guaira)",
+      "status": "Localizada, Estable",
+      "contact": "Protección Civil Vargas"
+    },
+    {
+      "id": "5",
+      "name": "Luis Eduardo Díaz",
+      "docId": "V-99887766",
+      "shelter": "Albergue de Campaña Caraballeda",
+      "status": "Localizado, Estable",
+      "contact": "Cruz Roja Seccional La Guaira"
+    }
+  ]
+}
